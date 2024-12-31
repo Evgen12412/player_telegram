@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Музыкальный плеер</title>
+    <!-- Подключение Font Awesome для Иконок -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Общие Стили */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #121212;
+            color: #ffffff;
+        }
+
+        h1 {
+            text-align: center;
+            padding: 20px;
+            background-color: #1db954;
+            margin: 0;
+            font-size: 2em;
+        }
+
+        /* Стили Вкладок */
+        .tabs {
+            display: flex;
+            justify-content: space-around;
+            background-color: #282828;
+            padding: 10px 20px;
+            box-sizing: border-box;
+            width: 100%;
+        }
+
+        .tabs button {
+            padding: 8px 12px;
+            margin: 0 5px;
+            font-size: 14px;
+            border: none;
+            background-color: transparent;
+            color: #b3b3b3;
+            cursor: pointer;
+            transition: color 0.3s, background-color 0.3s;
+            border-radius: 20px;
+            flex: 1;
+            max-width: 150px;
+        }
+
+        .tabs button:hover {
+            color: #ffffff;
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .tabs button.active {
+            color: #1db954;
+            background-color: rgba(29, 185, 84, 0.2);
+        }
+
+        /* Стили Аудио Плеера */
+        .audio-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 15px;
+            background-color: #181818;
+        }
+
+        audio {
+            width: 100%;
+            max-width: 600px;
+            outline: none;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+        }
+
+        /* Стили Контролов */
+        .controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .controls button {
+            background: none;
+            border: none;
+            color: #ffffff;
+            font-size: 24px;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+
+        .controls button:hover {
+            color: #1db954;
+        }
+
+        /* Текущий Трек */
+        .current-track {
+            margin-top: 10px;
+            font-size: 1em;
+            color: #1db954;
+            text-align: center;
+        }
+
+        /* Стили Колонок */
+        .columns {
+            display: flex;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .column {
+            background-color: #282828;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+            width: 80%;
+            max-width: 800px;
+            display: none;
+            transition: transform 0.3s, opacity 0.3s;
+        }
+
+        .column.active {
+            display: block;
+            animation: fadeIn 0.5s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .column-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .column-header h2 {
+            margin: 0;
+            font-size: 1.5em;
+            color: #1db954;
+        }
+
+        .column-header button {
+            padding: 8px 16px;
+            font-size: 14px;
+            border: none;
+            background-color: #1db954;
+            color: #ffffff;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .column-header button:hover {
+            background-color: #1ed760;
+        }
+
+        /* Стили Треков */
+        .track {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #3a3a3a;
+        }
+
+        .track:last-child {
+            border-bottom: none;
+        }
+
+        .track span {
+            font-size: 16px;
+            color: #ffffff;
+            flex: 1;
+        }
+
+        .track button {
+            background: none;
+            border: none;
+            color: #1db954;
+            font-size: 18px;
+            cursor: pointer;
+            transition: color 0.3s;
+            margin-left: 10px;
+        }
+
+        .track button:hover {
+            color: #1ed760;
+        }
+
+        /* Плейлист */
+        #playlistTracks {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        /* Адаптивность */
+        @media (max-width: 768px) {
+            .tabs {
+                padding: 10px 10px;
+            }
+
+            .tabs button {
+                padding: 8px 12px;
+                font-size: 14px;
+                margin: 0 3px;
+                max-width: 100px;
+            }
+
+            .audio-container {
+                padding: 15px;
+            }
+
+            .controls {
+                gap: 20px;
+            }
+
+            .current-track {
+                font-size: 1em;
+            }
+
+            .column-header h2 {
+                font-size: 1.2em;
+            }
+
+            .column-header button {
+                padding: 6px 12px;
+                font-size: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>Музыкальный плеер</h1>
+    <div class="tabs">
+        <button onclick="showColumn('music')" class="active">Музыка</button>
+        <button onclick="showColumn('sermons')">Проповеди</button>
+        <button onclick="showColumn('playlist')">Плейлист</button>
+    </div>
+
+    <div class="audio-container">
+        <audio id="audioPlayer" controls>
+            <source id="audioSource" src="" type="audio/aac"> <!-- Измените тип, если используете MP3 -->
+            Ваш браузер не поддерживает аудио элемент.
+        </audio>
+        <div class="current-track">
+            <span id="currentTrackTitle">Выберите трек для воспроизведения</span>
+        </div>
+        <div class="controls">
+            <button onclick="previousTrack()" title="Предыдущий"><i class="fas fa-backward"></i></button>
+            <button onclick="togglePlayPause()" id="playPauseBtn"><i class="fas fa-play"></i></button>
+            <button onclick="nextTrack()" title="Следующий"><i class="fas fa-forward"></i></button>
+        </div>
+    </div>
+
+    <div class="columns">
+        <!-- Колонка 1: Музыка -->
+        <div class="column active" id="music">
+            <div class="column-header">
+                <h2>Музыка</h2>
+                <button onclick="selectAll('music')"><i class="fas fa-check-square"></i> Выбрать все</button>
+            </div>
+            {% for audio_file in music %}
+            <div class="track">
+                <span>{{ audio_file[0] }}</span>
+                <button 
+                    data-src="{{ audio_file[2] }}" 
+                    data-name="{{ audio_file[0] }}" 
+                    onclick="addToPlaylist(this.dataset.src, this.dataset.name)" 
+                    title="Добавить в плейлист">
+                    <i class="fas fa-plus-circle"></i>
+                </button>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Колонка 2: Проповеди -->
+        <div class="column" id="sermons">
+            <div class="column-header">
+                <h2>Проповеди</h2>
+                <button onclick="selectAll('sermons')"><i class="fas fa-check-square"></i> Выбрать все</button>
+            </div>
+            {% for audio_file in sermons %}
+            <div class="track">
+                <span>{{ audio_file[0] }}</span>
+                <button 
+                    data-src="{{ audio_file[2] }}" 
+                    data-name="{{ audio_file[0] }}" 
+                    onclick="addToPlaylist(this.dataset.src, this.dataset.name)" 
+                    title="Добавить в плейлист">
+                    <i class="fas fa-plus-circle"></i>
+                </button>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Колонка 3: Плейлист -->
+        <div class="column" id="playlist">
+            <div class="column-header">
+                <h2>Плейлист</h2>
+            </div>
+            <div id="playlistTracks"></div>
+        </div>
+    </div>
+
+    <script>
+        const audioPlayer = document.getElementById('audioPlayer');
+        const audioSource = document.getElementById('audioSource');
+        const playlistTracks = document.getElementById('playlistTracks');
+        const playPauseBtn = document.getElementById('playPauseBtn');
+        const trackTitle = document.getElementById('currentTrackTitle');
+        let playlist = [];
+        let currentTrackIndex = 0;
+
+        // Измените URL прокси на правильный порт
+        const proxyUrl = 'http://127.0.0.1:5501/proxy?url=';
+
+        // Функция для добавления трека в плейлист
+        function addToPlaylist(src, name) {
+            const decodedSrc = decodeURIComponent(src);
+            const proxiedUrl = proxyUrl + encodeURIComponent(decodedSrc);
+            if (!playlist.some(track => track.url === proxiedUrl)) {
+                playlist.push({
+                    url: proxiedUrl,
+                    name: name
+                });
+                const trackElement = document.createElement('div');
+                trackElement.className = 'track';
+                trackElement.innerHTML = `
+                    <span>${name}</span>
+                    <button onclick="removeFromPlaylist('${proxiedUrl}')" title="Удалить из плейлиста"><i class="fas fa-minus-circle"></i></button>
+                `;
+                playlistTracks.appendChild(trackElement);
+
+                // Сохранить состояние после добавления
+                savePlayerState();
+
+                if (playlist.length === 1) {
+                    currentTrackIndex = 0;
+                    loadTrack(currentTrackIndex);
+                    updatePlayPauseButton();
+                }
+            }
+        }
+
+        // Функция для удаления трека из плейлиста
+        function removeFromPlaylist(src) {
+            const index = playlist.findIndex(track => track.url === src);
+            if (index !== -1) {
+                playlist.splice(index, 1);
+                const trackElement = document.querySelector(`#playlistTracks button[onclick="removeFromPlaylist('${src}')"]`).parentElement;
+                trackElement.remove();
+                console.log("Removed from playlist:", src);
+
+                // Сохранить состояние после удаления
+                savePlayerState();
+
+                // Перезагрузить трек, если удален текущий
+                if (index === currentTrackIndex) {
+                    if (playlist.length > 0) {
+                        currentTrackIndex = index % playlist.length;
+                        loadTrack(currentTrackIndex);
+                        updatePlayPauseButton();
+                    } else {
+                        audioPlayer.src = "";
+                        audioPlayer.load();
+                        trackTitle.textContent = "Выберите трек для воспроизведения";
+                        playPauseBtn.innerHTML = '<i class="fas fa-play"></i>';
+                    }
+                } else if (index < currentTrackIndex) {
+                    currentTrackIndex -= 1;
+                }
+            }
+        }
+
+        // Функция для загрузки трека
+        function loadTrack(index) {
+            if (playlist.length > 0 && index < playlist.length) {
+                const track = playlist[index];
+                audioPlayer.src = track.url;
+                trackTitle.textContent = track.name; // Обновляем название трека
+                audioPlayer.currentTime = 0;
+                audioPlayer.play().catch(error => {
+                    console.error('Ошибка воспроизведения:', error);
+                });
+                updatePlayPauseButton();
+
+                // Сохранить состояние после загрузки трека
+                savePlayerState();
+            } else {
+                audioPlayer.src = "";
+                audioPlayer.load();
+                trackTitle.textContent = "Выберите трек для воспроизведения";
+                playPauseBtn.innerHTML = '<i class="fas fa-play"></i>';
+            }
+        }
+
+        // Функция для переключения между воспроизведением и паузой
+        function togglePlayPause() {
+            if (audioPlayer.paused) {
+                audioPlayer.play();
+                playPauseBtn.innerHTML = '<i class="fas fa-pause"></i>';
+            } else {
+                audioPlayer.pause();
+                playPauseBtn.innerHTML = '<i class="fas fa-play"></i>';
+            }
+        }
+
+        // Функция для обновления состояния кнопки воспроизведения/паузы
+        function updatePlayPauseButton() {
+            if (!audioPlayer.paused) {
+                playPauseBtn.innerHTML = '<i class="fas fa-pause"></i>';
+            } else {
+                playPauseBtn.innerHTML = '<i class="fas fa-play"></i>';
+            }
+        }
+
+        // Функция для перехода к предыдущему треку
+        function previousTrack() {
+            if (playlist.length > 0) {
+                currentTrackIndex = (currentTrackIndex - 1 + playlist.length) % playlist.length;
+                loadTrack(currentTrackIndex);
+            }
+        }
+
+        // Функция для перехода к следующему треку
+        function nextTrack() {
+            if (playlist.length > 0) {
+                currentTrackIndex = (currentTrackIndex + 1) % playlist.length;
+                loadTrack(currentTrackIndex);
+            }
+        }
+
+        // Функция для переключения между вкладками
+        function showColumn(columnId) {
+            // Убираем класс 'active' из всех колонок
+            document.querySelectorAll('.column').forEach(column => {
+                column.classList.remove('active');
+            });
+            // Добавляем класс 'active' только к выбранной колонке
+            document.getElementById(columnId).classList.add('active');
+
+            // Убираем класс 'active' со всех кнопок и добавляем только к текущей
+            document.querySelectorAll('.tabs button').forEach(button => {
+                button.classList.remove('active');
+            });
+            document.querySelector(`.tabs button[onclick="showColumn('${columnId}')"]`).classList.add('active');
+        }
+
+        // Функция для выбора всех треков в колонке и их добавления в плейлист
+        function selectAll(columnId) {
+            const column = document.getElementById(columnId);
+            const buttons = column.querySelectorAll('.track button');
+            buttons.forEach(button => {
+                const src = button.dataset.src;
+                const name = button.dataset.name;
+                addToPlaylist(src, name);
+            });
+        }
+
+        // Функция для сохранения состояния плеера в localStorage
+        function savePlayerState() {
+            const state = {
+                playlist: playlist,
+                currentTrackIndex: currentTrackIndex,
+                currentTime: audioPlayer.currentTime
+            };
+            localStorage.setItem('playerState', JSON.stringify(state));
+        }
+
+        // Функция для загрузки состояния плеера из localStorage
+        function loadPlayerState() {
+            const state = JSON.parse(localStorage.getItem('playerState'));
+            if (state) {
+                playlist = state.playlist || [];
+                currentTrackIndex = state.currentTrackIndex || 0;
+
+                // Восстановление плейлиста
+                playlistTracks.innerHTML = '';
+                playlist.forEach(track => {
+                    const trackElement = document.createElement('div');
+                    trackElement.className = 'track';
+                    trackElement.innerHTML = `
+                        <span>${track.name}</span>
+                        <button onclick="removeFromPlaylist('${track.url}')" title="Удалить из плейлиста"><i class="fas fa-minus-circle"></i></button>
+                    `;
+                    playlistTracks.appendChild(trackElement);
+                });
+
+                // Восстановление текущего трека и времени воспроизведения
+                if (playlist.length > 0) {
+                    loadTrack(currentTrackIndex);
+                    audioPlayer.currentTime = state.currentTime || 0;
+                }
+            }
+        }
+
+        // Сохранение состояния при изменении времени воспроизведения
+        audioPlayer.addEventListener('timeupdate', () => {
+            if (!audioPlayer.paused) {
+                savePlayerState();
+            }
+        });
+
+        // Восстановление состояния при загрузке страницы
+        window.addEventListener('load', () => {
+            loadPlayerState();
+        });
+
+        // Обработка события окончания трека для автоматического перехода к следующему
+        audioPlayer.addEventListener('ended', () => {
+            nextTrack();
+            savePlayerState();
+        });
+
+        // Обновление кнопки воспроизведения/паузы при ручном воспроизведении/паузе
+        audioPlayer.addEventListener('play', updatePlayPauseButton);
+        audioPlayer.addEventListener('pause', updatePlayPauseButton);
+    </script>
+</body>
+</html>
