@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: ./app_fastapi
+      dockerfile: Dockerfile
+    container_name: telegram_app
+    ports:
+      - "8001:8001"  # FastAPI
+      - "5501:5501"  # Proxy Server
+    environment:
+      - API_ID=${API_ID}
+      - API_HASH=${API_HASH}
+      - BOT_TOKEN=${BOT_TOKEN}
+      - PHONE_NUMBER=${PHONE_NUMBER}
+      - CHANNEL_ID=${CHANNEL_ID}
+    volumes:
+      - ./app_fastapi/static/audio:/app/static/audio
+      - ./app_fastapi/templates:/app/templates
+      - ./app_fastapi/telegram_files.db:/app/telegram_files.db
+    restart: always

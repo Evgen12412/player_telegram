@@ -33,7 +33,6 @@ def get_audio_files():
         ORDER BY size DESC
     ''')
     audio_files = cursor.fetchall()
-    print(audio_files)
     conn.close()
 
     # Разделяем файлы на две категории
@@ -52,4 +51,4 @@ if __name__ == '__main__':
     import uvicorn
     uvicorn.run(app, host="127.0.0.1", port=8001)
 
-
+# uvicorn fast_api_routes:app --host 0.0.0.0 --port 8001 --reload

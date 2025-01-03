@@ -73,7 +73,7 @@ def main() -> None:
 
     print("Добавление обработчиков...")
     application.add_handler(CommandHandler("start", start))
-    application.add_handler(MessageHandler(filters.ChatType.CHANNEL, handle_channel_post))
+    # application.add_handler(MessageHandler(filters.ChatType.CHANNEL, handle_channel_post))
 
     # Запуск загрузки истории сообщений в основном цикле событий
     loop = asyncio.get_event_loop()

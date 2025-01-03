@@ -17,10 +17,13 @@ from telethon.tl.types import PeerChannel
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
+from dotenv import load_dotenv
+load_dotenv()
+
 # Конфигурация Telegram клиента
-API_ID = '21825944'
-API_HASH = '574a1fba91efbbec3a9b854d6eeceab7'
-BOT_TOKEN = '7785249240:AAF7uEYbUNTLD7HkM_TotKzgPXO57jLKx8U'
+API_ID = os.getenv('API_ID')
+API_HASH = os.getenv('API_HASH')
+BOT_TOKEN = os.getenv('BOT_TOKEN')
 
 # Глобальная переменная для клиента
 client = None
@@ -196,3 +199,5 @@ async def proxy(url: str, background_tasks: BackgroundTasks):
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="127.0.0.1", port=5501, log_level="debug")
+
+    # uvicorn proxy_server:app --host 0.0.0.0 --port 5501 --reload

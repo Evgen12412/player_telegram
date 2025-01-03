@@ -9,9 +9,9 @@ from telethon import TelegramClient
 from telethon.tl.functions.channels import GetFullChannelRequest
 
 # Ваши данные
-api_id = '21825944'
-api_hash = '574a1fba91efbbec3a9b854d6eeceab7'
-phone_number = '+79280433030'
+api_id = os.getenv('API_ID')
+api_hash = os.getenv('API_HASH')
+phone_number = os.getenv('PHONE_NUMBER')
 
 # Имя канала (или ссылка)
 channel_username = 'https://t.me/+MpeNP3bDz2EwZGIy'  # Например, 'telegram' для канала @telegram
