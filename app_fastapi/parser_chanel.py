@@ -4,9 +4,15 @@ import os
 import sqlite3
 import unicodedata
 
+from dotenv import load_dotenv
 from pydub import AudioSegment
 from telethon import TelegramClient
 from telethon.tl.functions.channels import GetFullChannelRequest
+
+
+# Загрузка переменных окружения из .env файла
+load_dotenv()
+
 
 # Ваши данные
 api_id = os.getenv('API_ID')
@@ -102,9 +108,8 @@ def convert_to_mp3_in_memory(file_data):
 
 # Функция для нормализации имени файла
 def normalize_filename(filename):
-    # Удаляем диакритические знаки и заменяем пробелы на подчеркивания
-    normalized = unicodedata.normalize('NFKD', filename).encode('ascii', 'ignore').decode('utf-8')
-    return normalized.replace(' ', '_')
+    # Возвращаем оригинальное имя файла без изменений
+    return filename
 
 
 # Определение таблицы по префиксу и постфиксу

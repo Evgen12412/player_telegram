@@ -34,7 +34,7 @@
             width: 100%;
         }
 
-        .tabs button {
+        .tabs button, .tabs .dropdown {
             padding: 8px 12px;
             margin: 0 5px;
             font-size: 14px;
@@ -46,16 +46,51 @@
             border-radius: 20px;
             flex: 1;
             max-width: 150px;
+            position: relative;
         }
 
-        .tabs button:hover {
+        .tabs button:hover, .tabs .dropdown:hover {
             color: #ffffff;
             background-color: rgba(255, 255, 255, 0.1);
         }
 
-        .tabs button.active {
+        .tabs button.active, .tabs .dropdown.active {
             color: #1db954;
             background-color: rgba(29, 185, 84, 0.2);
+        }
+
+        /* Стили Выпадающего Меню */
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            background-color: #282828;
+            min-width: 160px;
+            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+            z-index: 1;
+            border-radius: 5px;
+            top: 100%;
+            left: 0;
+        }
+
+        .dropdown-content button {
+            color: #b3b3b3;
+            padding: 10px 16px;
+            text-decoration: none;
+            display: block;
+            background: none;
+            border: none;
+            width: 100%;
+            text-align: left;
+            cursor: pointer;
+        }
+
+        .dropdown-content button:hover {
+            background-color: #1db954;
+            color: white;
+        }
+
+        .dropdown:hover .dropdown-content {
+            display: block;
         }
 
         /* Стили Аудио Плеера */
@@ -206,7 +241,7 @@
                 padding: 10px 10px;
             }
 
-            .tabs button {
+            .tabs button, .tabs .dropdown {
                 padding: 8px 12px;
                 font-size: 14px;
                 margin: 0 3px;
@@ -233,8 +268,6 @@
                 padding: 6px 12px;
                 font-size: 12px;
             }
-
-
         }
 
          /* Стили для ссылки на Telegram */
@@ -263,316 +296,391 @@
     </style>
 </head>
 <body>
-<h1>Музыкальный плеер</h1>
+    <h1>Музыкальный плеер</h1>
     <div class="telegram-link">
         <a href="https://t.me/+vkuH-pQkedliNTAy" target="_blank">
             <i class="fab fa-telegram-plane"></i> Еще больше интересного тут...
         </a>
     </div>
-<div class="tabs">
-    <button onclick="showColumn('music')" class="active">Музыка</button>
-    <button onclick="showColumn('sermons')">Проповеди</button>
-    <button onclick="showColumn('playlist')">Плейлист</button>
-</div>
-
-<div class="audio-container">
-    <audio id="audioPlayer" controls>
-        <source id="audioSource" src="" type="audio/aac"> <!-- Измените тип, если используете MP3 -->
-        Ваш браузер не поддерживает аудио элемент.
-    </audio>
-    <div class="current-track">
-        <span id="currentTrackTitle">Выберите трек для воспроизведения</span>
-    </div>
-    <div class="controls">
-        <button onclick="previousTrack()" title="Предыдущий"><i class="fas fa-backward"></i></button>
-        <button onclick="togglePlayPause()" id="playPauseBtn"><i class="fas fa-play"></i></button>
-        <button onclick="nextTrack()" title="Следующий"><i class="fas fa-forward"></i></button>
-    </div>
-</div>
-
-<div class="columns">
-    <!-- Колонка 1: Музыка -->
-    <div class="column active" id="music">
-        <div class="column-header">
-            <h2>Музыка</h2>
-            <button onclick="selectAll('music')"><i class="fas fa-check-square"></i> Выбрать все</button>
+    <div class="tabs">
+        <button onclick="showColumn('music')" class="active">Музыка</button>
+        <div class="dropdown">
+            <button class="dropbtn">Другие Категории <i class="fas fa-caret-down"></i></button>
+            <div class="dropdown-content">
+                <button onclick="showColumn('podcasts')">Подкасты</button>
+                <button onclick="showColumn('bible')">Библия</button>
+                <button onclick="showColumn('sermons')">Проповеди</button>
+                <button onclick="showColumn('evedence')">Доказательства</button>
+            </div>
         </div>
-        {% for audio_file in music %}
-        <div class="track">
-            <span>{{ audio_file[0] }}</span>
-            <button
-                    data-src="{{ audio_file[2] }}"
-                    data-name="{{ audio_file[0] }}"
-                    onclick="addToPlaylist(this.dataset.src, this.dataset.name)"
-                    title="Добавить в плейлист">
-                <i class="fas fa-plus-circle"></i>
-            </button>
-        </div>
-        {% endfor %}
+        <button onclick="showColumn('playlist')">Плейлист</button>
     </div>
 
-    <!-- Колонка 2: Проповеди -->
-    <div class="column" id="sermons">
-        <div class="column-header">
-            <h2>Проповеди</h2>
-            <button onclick="selectAll('sermons')"><i class="fas fa-check-square"></i> Выбрать все</button>
+    <div class="audio-container">
+        <audio id="audioPlayer" controls>
+            <source id="audioSource" src="" type="audio/mpeg"> <!-- Изменено на 'audio/mpeg' -->
+            Ваш браузер не поддерживает аудио элемент.
+        </audio>
+        <div class="current-track">
+            <span id="currentTrackTitle">Выберите трек для воспроизведения</span>
         </div>
-        {% for audio_file in sermons %}
-        <div class="track">
-            <span>{{ audio_file[0] }}</span>
-            <button
-                    data-src="{{ audio_file[2] }}"
-                    data-name="{{ audio_file[0] }}"
-                    onclick="addToPlaylist(this.dataset.src, this.dataset.name)"
-                    title="Добавить в плейлист">
-                <i class="fas fa-plus-circle"></i>
-            </button>
+        <div class="controls">
+            <button onclick="previousTrack()" title="Предыдущий"><i class="fas fa-backward"></i></button>
+            <button onclick="togglePlayPause()" id="playPauseBtn"><i class="fas fa-play"></i></button>
+            <button onclick="nextTrack()" title="Следующий"><i class="fas fa-forward"></i></button>
         </div>
-        {% endfor %}
     </div>
 
-    <!-- Колонка 3: Плейлист -->
-    <div class="column" id="playlist">
-        <div class="column-header">
-            <h2>Плейлист</h2>
-            <button onclick="clearPlaylist()"><i class="fas fa-trash-alt"></i> Очистить</button>
+    <div class="columns">
+        <!-- Колонка 1: Музыка -->
+        <div class="column active" id="music">
+            <div class="column-header">
+                <h2>Музыка</h2>
+                <button onclick="selectAll('music')"><i class="fas fa-check-square"></i> Выбрать все</button>
+            </div>
+            {% for audio_file in audio_files['Музыка'] %}
+            <div class="track">
+                <span>{{ audio_file[0] }}</span>
+                <button
+                        data-src="{{ audio_file[2] }}"
+                        data-name="{{ audio_file[0] }}"
+                        onclick="addToPlaylist(this.dataset.src, this.dataset.name)"
+                        title="Добавить в плейлист">
+                    <i class="fas fa-plus-circle"></i>
+                </button>
+            </div>
+            {% endfor %}
         </div>
-        <div id="playlistTracks"></div>
+
+        <!-- Колонка 2: Подкасты -->
+        <div class="column" id="podcasts">
+            <div class="column-header">
+                <h2>Подкасты</h2>
+                <button onclick="selectAll('podcasts')"><i class="fas fa-check-square"></i> Выбрать все</button>
+            </div>
+            {% for audio_file in audio_files['Подкасты'] %}
+            <div class="track">
+                <span>{{ audio_file[0] }}</span>
+                <button
+                        data-src="{{ audio_file[2] }}"
+                        data-name="{{ audio_file[0] }}"
+                        onclick="addToPlaylist(this.dataset.src, this.dataset.name)"
+                        title="Добавить в плейлист">
+                    <i class="fas fa-plus-circle"></i>
+                </button>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Колонка 3: Библия -->
+        <div class="column" id="bible">
+            <div class="column-header">
+                <h2>Библия</h2>
+                <button onclick="selectAll('bible')"><i class="fas fa-check-square"></i> Выбрать все</button>
+            </div>
+            {% for audio_file in audio_files['Библия'] %}
+            <div class="track">
+                <span>{{ audio_file[0] }}</span>
+                <button
+                        data-src="{{ audio_file[2] }}"
+                        data-name="{{ audio_file[0] }}"
+                        onclick="addToPlaylist(this.dataset.src, this.dataset.name)"
+                        title="Добавить в плейлист">
+                    <i class="fas fa-plus-circle"></i>
+                </button>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Колонка 4: Проповеди -->
+        <div class="column" id="sermons">
+            <div class="column-header">
+                <h2>Проповеди</h2>
+                <button onclick="selectAll('sermons')"><i class="fas fa-check-square"></i> Выбрать все</button>
+            </div>
+            {% for audio_file in audio_files['Проповеди'] %}
+            <div class="track">
+                <span>{{ audio_file[0] }}</span>
+                <button
+                        data-src="{{ audio_file[2] }}"
+                        data-name="{{ audio_file[0] }}"
+                        onclick="addToPlaylist(this.dataset.src, this.dataset.name)"
+                        title="Добавить в плейлист">
+                    <i class="fas fa-plus-circle"></i>
+                </button>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Колонка 5: Доказательства -->
+        <div class="column" id="evedence">
+            <div class="column-header">
+                <h2>Доказательства</h2>
+                <button onclick="selectAll('evedence')"><i class="fas fa-check-square"></i> Выбрать все</button>
+            </div>
+            {% for audio_file in audio_files['Доказательства'] %}
+            <div class="track">
+                <span>{{ audio_file[0] }}</span>
+                <button
+                        data-src="{{ audio_file[2] }}"
+                        data-name="{{ audio_file[0] }}"
+                        onclick="addToPlaylist(this.dataset.src, this.dataset.name)"
+                        title="Добавить в плейлист">
+                    <i class="fas fa-plus-circle"></i>
+                </button>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Колонка 6: Плейлист -->
+        <div class="column" id="playlist">
+            <div class="column-header">
+                <h2>Плейлист</h2>
+                <button onclick="clearPlaylist()"><i class="fas fa-trash-alt"></i> Очистить</button>
+            </div>
+            <div id="playlistTracks"></div>
+        </div>
     </div>
-</div>
 
-<script>
-    const audioPlayer = document.getElementById('audioPlayer');
-    const audioSource = document.getElementById('audioSource');
-    const playlistTracks = document.getElementById('playlistTracks');
-    const playPauseBtn = document.getElementById('playPauseBtn');
-    const trackTitle = document.getElementById('currentTrackTitle');
-    let playlist = [];
-    let currentTrackIndex = 0;
+    <script>
+        const audioPlayer = document.getElementById('audioPlayer');
+        const audioSource = document.getElementById('audioSource');
+        const playlistTracks = document.getElementById('playlistTracks');
+        const playPauseBtn = document.getElementById('playPauseBtn');
+        const trackTitle = document.getElementById('currentTrackTitle');
+        let playlist = [];
+        let currentTrackIndex = 0;
 
-    // Измените URL прокси на правильный порт
-    const proxyUrl = 'http://127.0.0.1:5501/proxy?url=';
+        // Измените URL прокси на правильный порт
+        const proxyUrl = '/proxy?url=';
 
-    // Функция для добавления трека в плейлист
-    function addToPlaylist(src, name) {
-        const decodedSrc = decodeURIComponent(src);
-        const proxiedUrl = proxyUrl + encodeURIComponent(decodedSrc);
-        if (!playlist.some(track => track.url === proxiedUrl)) {
-            playlist.push({
-                url: proxiedUrl,
-                name: name
-            });
-            const trackElement = document.createElement('div');
-            trackElement.className = 'track';
-            trackElement.innerHTML = `
-                <span>${name}</span>
-                <button onclick="removeFromPlaylist('${proxiedUrl}')" title="Удалить из плейлиста"><i class="fas fa-minus-circle"></i></button>
-            `;
-            playlistTracks.appendChild(trackElement);
-
-            // Сохранить состояние после добавления
-            savePlayerState();
-
-            if (playlist.length === 1) {
-                currentTrackIndex = 0;
-                loadTrack(currentTrackIndex);
-                updatePlayPauseButton();
-            }
-        }
-    }
-
-    // Функция для удаления трека из плейлиста
-    function removeFromPlaylist(src) {
-        const index = playlist.findIndex(track => track.url === src);
-        if (index !== -1) {
-            playlist.splice(index, 1);
-            const trackElement = document.querySelector(`#playlistTracks button[onclick="removeFromPlaylist('${src}')"]`).parentElement;
-            trackElement.remove();
-            console.log("Removed from playlist:", src);
-
-            // Сохранить состояние после удаления
-            savePlayerState();
-
-            // Перезагрузить трек, если удален текущий
-            if (index === currentTrackIndex) {
-                if (playlist.length > 0) {
-                    currentTrackIndex = index % playlist.length;
-                    loadTrack(currentTrackIndex);
-                    updatePlayPauseButton();
-                } else {
-                    audioPlayer.src = "";
-                    audioPlayer.load();
-                    trackTitle.textContent = "Выберите трек для воспроизведения";
-                    playPauseBtn.innerHTML = '<i class="fas fa-play"></i>';
-                }
-            } else if (index < currentTrackIndex) {
-                currentTrackIndex -= 1;
-            }
-        }
-    }
-
-    // Функция для загрузки трека
-    function loadTrack(index) {
-        if (playlist.length > 0 && index < playlist.length) {
-            const track = playlist[index];
-            audioPlayer.src = track.url;
-            trackTitle.textContent = track.name; // Обновляем название трека
-            audioPlayer.currentTime = 0;
-            audioPlayer.play().catch(error => {
-                console.error('Ошибка воспроизведения:', error);
-            });
-            updatePlayPauseButton();
-
-            // Сохранить состояние после загрузки трека
-            savePlayerState();
-        } else {
-            audioPlayer.src = "";
-            audioPlayer.load();
-            trackTitle.textContent = "Выберите трек для воспроизведения";
-            playPauseBtn.innerHTML = '<i class="fas fa-play"></i>';
-        }
-    }
-
-    // Функция для переключения между воспроизведением и паузой
-    function togglePlayPause() {
-        if (audioPlayer.paused) {
-            audioPlayer.play();
-            playPauseBtn.innerHTML = '<i class="fas fa-pause"></i>';
-        } else {
-            audioPlayer.pause();
-            playPauseBtn.innerHTML = '<i class="fas fa-play"></i>';
-        }
-    }
-
-    // Функция для очистки плейлиста с подтверждением
-function clearPlaylist() {
-    if (confirm("Вы уверены, что хотите очистить плейлист?")) {
-        // Очищаем массив плейлиста
-        playlist = [];
-        // Очищаем отображение плейлиста
-        playlistTracks.innerHTML = '';
-        // Сброс текущего трека
-        currentTrackIndex = 0;
-        audioPlayer.src = "";
-        audioPlayer.load();
-        trackTitle.textContent = "Выберите трек для воспроизведения";
-        playPauseBtn.innerHTML = '<i class="fas fa-play"></i>';
-
-        // Сохранить состояние после очистки
-        savePlayerState();
-    }
-}
-
-    // Функция для обновления состояния кнопки воспроизведения/паузы
-    function updatePlayPauseButton() {
-        if (!audioPlayer.paused) {
-            playPauseBtn.innerHTML = '<i class="fas fa-pause"></i>';
-        } else {
-            playPauseBtn.innerHTML = '<i class="fas fa-play"></i>';
-        }
-    }
-
-    // Функция для перехода к предыдущему треку
-    function previousTrack() {
-        if (playlist.length > 0) {
-            currentTrackIndex = (currentTrackIndex - 1 + playlist.length) % playlist.length;
-            loadTrack(currentTrackIndex);
-        }
-    }
-
-    // Функция для перехода к следующему треку
-    function nextTrack() {
-        if (playlist.length > 0) {
-            currentTrackIndex = (currentTrackIndex + 1) % playlist.length;
-            loadTrack(currentTrackIndex);
-        }
-    }
-
-    // Функция для переключения между вкладками
-    function showColumn(columnId) {
-        // Убираем класс 'active' из всех колонок
-        document.querySelectorAll('.column').forEach(column => {
-            column.classList.remove('active');
-        });
-        // Добавляем класс 'active' только к выбранной колонке
-        document.getElementById(columnId).classList.add('active');
-
-        // Убираем класс 'active' со всех кнопок и добавляем только к текущей
-        document.querySelectorAll('.tabs button').forEach(button => {
-            button.classList.remove('active');
-        });
-        document.querySelector(`.tabs button[onclick="showColumn('${columnId}')"]`).classList.add('active');
-    }
-
-    // Функция для выбора всех треков в колонке и их добавления в плейлист
-    function selectAll(columnId) {
-        const column = document.getElementById(columnId);
-        const buttons = column.querySelectorAll('.track button');
-        buttons.forEach(button => {
-            const src = button.dataset.src;
-            const name = button.dataset.name;
-            addToPlaylist(src, name);
-        });
-    }
-
-    // Функция для сохранения состояния плеера в localStorage
-    function savePlayerState() {
-        const state = {
-            playlist: playlist,
-            currentTrackIndex: currentTrackIndex,
-            currentTime: audioPlayer.currentTime
-        };
-        localStorage.setItem('playerState', JSON.stringify(state));
-    }
-
-    // Функция для загрузки состояния плеера из localStorage
-    function loadPlayerState() {
-        const state = JSON.parse(localStorage.getItem('playerState'));
-        if (state) {
-            playlist = state.playlist || [];
-            currentTrackIndex = state.currentTrackIndex || 0;
-
-            // Восстановление плейлиста
-            playlistTracks.innerHTML = '';
-            playlist.forEach(track => {
+        // Функция для добавления трека в плейлист
+        function addToPlaylist(src, name) {
+            const decodedSrc = decodeURIComponent(src);
+            const proxiedUrl = proxyUrl + encodeURIComponent(decodedSrc);
+            if (!playlist.some(track => track.url === proxiedUrl)) {
+                playlist.push({
+                    url: proxiedUrl,
+                    name: name
+                });
                 const trackElement = document.createElement('div');
                 trackElement.className = 'track';
                 trackElement.innerHTML = `
-                    <span>${track.name}</span>
-                    <button onclick="removeFromPlaylist('${track.url}')" title="Удалить из плейлиста"><i class="fas fa-minus-circle"></i></button>
+                    <span>${name}</span>
+                    <button onclick="removeFromPlaylist('${proxiedUrl}')" title="Удалить из плейлиста"><i class="fas fa-minus-circle"></i></button>
                 `;
                 playlistTracks.appendChild(trackElement);
-            });
 
-            // Восстановление текущего трека и времени воспроизведения
-            if (playlist.length > 0) {
-                loadTrack(currentTrackIndex);
-                audioPlayer.currentTime = state.currentTime || 0;
+                // Сохранить состояние после добавления
+                savePlayerState();
+
+                if (playlist.length === 1) {
+                    currentTrackIndex = 0;
+                    loadTrack(currentTrackIndex);
+                    updatePlayPauseButton();
+                }
             }
         }
-    }
 
-    // Сохранение состояния при изменении времени воспроизведения
-    audioPlayer.addEventListener('timeupdate', () => {
-        if (!audioPlayer.paused) {
-            savePlayerState();
+        // Функция для удаления трека из плейлиста
+        function removeFromPlaylist(src) {
+            const index = playlist.findIndex(track => track.url === src);
+            if (index !== -1) {
+                playlist.splice(index, 1);
+                const trackElement = document.querySelector(`#playlistTracks button[onclick="removeFromPlaylist('${src}')"]`).parentElement;
+                trackElement.remove();
+                console.log("Removed from playlist:", src);
+
+                // Сохранить состояние после удаления
+                savePlayerState();
+
+                // Перезагрузить трек, если удален текущий
+                if (index === currentTrackIndex) {
+                    if (playlist.length > 0) {
+                        currentTrackIndex = index % playlist.length;
+                        loadTrack(currentTrackIndex);
+                        updatePlayPauseButton();
+                    } else {
+                        audioPlayer.src = "";
+                        audioPlayer.load();
+                        trackTitle.textContent = "Выберите трек для воспроизведения";
+                        playPauseBtn.innerHTML = '<i class="fas fa-play"></i>';
+                    }
+                } else if (index < currentTrackIndex) {
+                    currentTrackIndex -= 1;
+                }
+            }
         }
-    });
 
-    // Восстановление состояния при загрузке страницы
-    window.addEventListener('load', () => {
-        loadPlayerState();
-    });
+        // Функция для загрузки трека
+        function loadTrack(index) {
+            if (playlist.length > 0 && index < playlist.length) {
+                const track = playlist[index];
+                audioPlayer.src = track.url;
+                trackTitle.textContent = track.name; // Обновляем название трека
+                audioPlayer.currentTime = 0;
+                audioPlayer.play().catch(error => {
+                    console.error('Ошибка воспроизведения:', error);
+                });
+                updatePlayPauseButton();
 
-    // Обработка события окончания трека для автоматического перехода к следующему
-    audioPlayer.addEventListener('ended', () => {
-        nextTrack();
-        savePlayerState();
-    });
+                // Сохранить состояние после загрузки трека
+                savePlayerState();
+            } else {
+                audioPlayer.src = "";
+                audioPlayer.load();
+                trackTitle.textContent = "Выберите трек для воспроизведения";
+                playPauseBtn.innerHTML = '<i class="fas fa-play"></i>';
+            }
+        }
 
-    // Обновление кнопки воспроизведения/паузы при ручном воспроизведении/паузе
-    audioPlayer.addEventListener('play', updatePlayPauseButton);
-    audioPlayer.addEventListener('pause', updatePlayPauseButton);
-</script>
+        // Функция для переключения между воспроизведением и паузой
+        function togglePlayPause() {
+            if (audioPlayer.paused) {
+                audioPlayer.play();
+                playPauseBtn.innerHTML = '<i class="fas fa-pause"></i>';
+            } else {
+                audioPlayer.pause();
+                playPauseBtn.innerHTML = '<i class="fas fa-play"></i>';
+            }
+        }
+
+        // Функция для очистки плейлиста с подтверждением
+        function clearPlaylist() {
+            if (confirm("Вы уверены, что хотите очистить плейлист?")) {
+                // Очищаем массив плейлиста
+                playlist = [];
+                // Очищаем отображение плейлиста
+                playlistTracks.innerHTML = '';
+                // Сброс текущего трека
+                currentTrackIndex = 0;
+                audioPlayer.src = "";
+                audioPlayer.load();
+                trackTitle.textContent = "Выберите трек для воспроизведения";
+                playPauseBtn.innerHTML = '<i class="fas fa-play"></i>';
+
+                // Сохранить состояние после очистки
+                savePlayerState();
+            }
+        }
+
+        // Функция для обновления состояния кнопки воспроизведения/паузы
+        function updatePlayPauseButton() {
+            if (!audioPlayer.paused) {
+                playPauseBtn.innerHTML = '<i class="fas fa-pause"></i>';
+            } else {
+                playPauseBtn.innerHTML = '<i class="fas fa-play"></i>';
+            }
+        }
+
+        // Функция для перехода к предыдущему треку
+        function previousTrack() {
+            if (playlist.length > 0) {
+                currentTrackIndex = (currentTrackIndex - 1 + playlist.length) % playlist.length;
+                loadTrack(currentTrackIndex);
+            }
+        }
+
+        // Функция для перехода к следующему треку
+        function nextTrack() {
+            if (playlist.length > 0) {
+                currentTrackIndex = (currentTrackIndex + 1) % playlist.length;
+                loadTrack(currentTrackIndex);
+            }
+        }
+
+        // Функция для переключения между колонками
+        function showColumn(columnId) {
+            // Убираем класс 'active' из всех колонок
+            document.querySelectorAll('.column').forEach(column => {
+                column.classList.remove('active');
+            });
+            // Добавляем класс 'active' только к выбранной колонке
+            document.getElementById(columnId).classList.add('active');
+
+            // Убираем класс 'active' со всех кнопок и добавляем только к текущей
+            document.querySelectorAll('.tabs button, .tabs .dropdown button').forEach(button => {
+                button.classList.remove('active');
+            });
+
+            if (columnId === 'music') {
+                document.querySelector(`.tabs button[onclick="showColumn('music')"]`).classList.add('active');
+            } else if (columnId === 'playlist') {
+                document.querySelector(`.tabs button[onclick="showColumn('playlist')"]`).classList.add('active');
+            } else {
+                document.querySelector(`.dropdown .dropbtn`).classList.add('active');
+            }
+        }
+
+        // Функция для выбора всех треков в колонке и их добавления в плейлист
+        function selectAll(columnId) {
+            const column = document.getElementById(columnId);
+            const buttons = column.querySelectorAll('.track button');
+            buttons.forEach(button => {
+                const src = button.dataset.src;
+                const name = button.dataset.name;
+                addToPlaylist(src, name);
+            });
+        }
+
+        // Функция для сохранения состояния плеера в localStorage
+        function savePlayerState() {
+            const state = {
+                playlist: playlist,
+                currentTrackIndex: currentTrackIndex,
+                currentTime: audioPlayer.currentTime
+            };
+            localStorage.setItem('playerState', JSON.stringify(state));
+        }
+
+        // Функция для загрузки состояния плеера из localStorage
+        function loadPlayerState() {
+            const state = JSON.parse(localStorage.getItem('playerState'));
+            if (state) {
+                playlist = state.playlist || [];
+                currentTrackIndex = state.currentTrackIndex || 0;
+
+                // Восстановление плейлиста
+                playlistTracks.innerHTML = '';
+                playlist.forEach(track => {
+                    const trackElement = document.createElement('div');
+                    trackElement.className = 'track';
+                    trackElement.innerHTML = `
+                        <span>${track.name}</span>
+                        <button onclick="removeFromPlaylist('${track.url}')" title="Удалить из плейлиста"><i class="fas fa-minus-circle"></i></button>
+                    `;
+                    playlistTracks.appendChild(trackElement);
+                });
+
+                // Восстановление текущего трека и времени воспроизведения
+                if (playlist.length > 0) {
+                    loadTrack(currentTrackIndex);
+                    audioPlayer.currentTime = state.currentTime || 0;
+                }
+            }
+        }
+
+        // Сохранение состояния при изменении времени воспроизведения
+        audioPlayer.addEventListener('timeupdate', () => {
+            if (!audioPlayer.paused) {
+                savePlayerState();
+            }
+        });
+
+        // Восстановление состояния при загрузке страницы
+        window.addEventListener('load', () => {
+            loadPlayerState();
+        });
+
+        // Обработка события окончания трека для автоматического перехода к следующему
+        audioPlayer.addEventListener('ended', () => {
+            nextTrack();
+            savePlayerState();
+        });
+
+        // Обновление кнопки воспроизведения/паузы при ручном воспроизведении/паузе
+        audioPlayer.addEventListener('play', updatePlayPauseButton);
+        audioPlayer.addEventListener('pause', updatePlayPauseButton);
+    </script>
 </body>
 </html>

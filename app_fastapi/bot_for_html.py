@@ -1,8 +1,12 @@
 import asyncio
 import os
 
+from dotenv import load_dotenv
 from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
+
+# Загрузка переменных окружения из .env файла
+load_dotenv()
 
 # Замените на ваш токен
 TOKEN = '7785249240:AAF7uEYbUNTLD7HkM_TotKzgPXO57jLKx8U'

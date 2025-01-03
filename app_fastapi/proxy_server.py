@@ -18,6 +18,8 @@ logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 from dotenv import load_dotenv
+
+# Загрузка переменных окружения из .env файла
 load_dotenv()
 
 # Конфигурация Telegram клиента

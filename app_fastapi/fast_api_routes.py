@@ -1,10 +1,10 @@
 import os
+import sqlite3
 
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
-import sqlite3
 
 app = FastAPI()
 
@@ -21,34 +21,52 @@ os.makedirs(AUDIO_DIR, exist_ok=True)
 templates = Jinja2Templates(directory=TEMPLATES_DIR)
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
-# Функция для получения аудиофайлов из базы данных
+# Список категорий и таблиц
+CATEGORIES = {
+    "Музыка": ["song_ru", "song_en"],
+    "Подкасты": ["podcast_ru", "podcast_en"],
+    "Библия": ["bible_ru", "bible_en"],
+    "Проповеди": ["sermons_ru", "sermons_en"],
+    "Доказательства": ["evedence_ru", "evedence_en"]
+}
+
+
 def get_audio_files():
     conn = sqlite3.connect('telegram_files.db')
     cursor = conn.cursor()
-    # Выбираем только аудиофайлы и сортируем их по размеру (по убыванию)
-    cursor.execute('''
-        SELECT  file_name, size, download_link
-        FROM files
-        WHERE mime_type LIKE 'audio%'
-        ORDER BY size DESC
-    ''')
-    audio_files = cursor.fetchall()
+
+    audio_files = {}
+
+    for category, tables in CATEGORIES.items():
+        audio_files[category] = []
+        for table in tables:
+            cursor.execute(f'''
+                SELECT file_name, size, download_link
+                FROM {table}
+                WHERE mime_type LIKE 'audio%'
+                ORDER BY size DESC
+            ''')
+            fetched_files = cursor.fetchall()
+            for file in fetched_files:
+                audio_files[category].append(file)
+
     conn.close()
+    return audio_files
 
-    # Разделяем файлы на две категории
-    sermons = [file for file in audio_files if file[1] > 8888888]  # Проповеди
-    music = [file for file in audio_files if file[1] <= 8888888]   # Музыка
-
-    return {"sermons": sermons, "music": music}
 
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
     # Получаем аудиофайлы из базы данных
     audio_files = get_audio_files()
-    return templates.TemplateResponse("index.html", {"request": request, **audio_files})
+    return templates.TemplateResponse("index.html", {"request": request, "audio_files": audio_files})
+
+
+@app.head("/", response_class=HTMLResponse)
+async def head_root():
+    return
+
 
 if __name__ == '__main__':
     import uvicorn
-    uvicorn.run(app, host="127.0.0.1", port=8001)
 
-# uvicorn fast_api_routes:app --host 0.0.0.0 --port 8001 --reload
+    uvicorn.run(app, host="127.0.0.1", port=8001)
