@@ -19,46 +19,77 @@ channel_username = 'https://t.me/+MpeNP3bDz2EwZGIy'  # Например, 'telegr
 # Создаем клиент
 client = TelegramClient('session_name', api_id, api_hash)
 
+
 # Подключение к базе данных SQLite
 def init_db():
     conn = sqlite3.connect('telegram_files.db')
     cursor = conn.cursor()
-    # Создаем таблицу, если она не существует
+    # Список таблиц с их базовыми именами
+    tables = ['song', 'podcast', 'bible', 'sermons', 'evedence']
+    languages = ['ru', 'en']
+
+    for table_base in tables:
+        for lang in languages:
+            table_name = f"{table_base}_{lang}"
+            cursor.execute(f'''
+                CREATE TABLE IF NOT EXISTS {table_name} (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    track_title TEXT NOT NULL,
+                    file_name TEXT NOT NULL,
+                    date TEXT NOT NULL,
+                    size INTEGER NOT NULL,
+                    mime_type TEXT NOT NULL,
+                    download_link TEXT NOT NULL
+                )
+            ''')
+    # Таблица плейлиста
     cursor.execute('''
-        CREATE TABLE IF NOT EXISTS files (
+        CREATE TABLE IF NOT EXISTS my_playlist (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            track_title TEXT NOT NULL,
             file_name TEXT NOT NULL,
-            date TEXT NOT NULL,
-            size INTEGER NOT NULL,
-            mime_type TEXT NOT NULL,
-            download_link TEXT NOT NULL
+            added_at TEXT NOT NULL
         )
     ''')
     conn.commit()
     conn.close()
 
-# Проверка существования файла в базе данных
-def file_exists(file_name):
+
+# Проверка существования файла в соответствующей таблице
+def file_exists(table_name, file_name):
     conn = sqlite3.connect('telegram_files.db')
     cursor = conn.cursor()
-    cursor.execute('SELECT id FROM files WHERE file_name = ?', (file_name,))
+    cursor.execute(f'SELECT id FROM {table_name} WHERE file_name = ?', (file_name,))
     result = cursor.fetchone()
     conn.close()
     return result is not None
 
-# Добавление данных в базу данных
-def save_to_db(track_title, file_name, date, size, mime_type, download_link):
+
+# Добавление данных в соответствующую таблицу
+def save_to_db(table_name, track_title, file_name, date, size, mime_type, download_link):
     conn = sqlite3.connect('telegram_files.db')
     cursor = conn.cursor()
     # Вставляем данные в таблицу
-    cursor.execute('''
-        INSERT INTO files (track_title, file_name, date, size, mime_type, download_link)
+    cursor.execute(f'''
+        INSERT INTO {table_name} (track_title, file_name, date, size, mime_type, download_link)
         VALUES (?, ?, ?, ?, ?, ?)
     ''', (track_title, file_name, date, size, mime_type, download_link))
     conn.commit()
     conn.close()
-    print(f"Данные сохранены в базу данных: {file_name}")
+    print(f"Данные сохранены в базу данных: {file_name} в таблицу {table_name}")
+
+
+# Функция для добавления в плейлист
+def add_to_playlist(file_name):
+    conn = sqlite3.connect('telegram_files.db')
+    cursor = conn.cursor()
+    cursor.execute('''
+        INSERT INTO my_playlist (file_name, added_at)
+        VALUES (?, ?)
+    ''', (file_name, asyncio.get_event_loop().time()))
+    conn.commit()
+    conn.close()
+    print(f"Файл добавлен в плейлист: {file_name}")
+
 
 # Функция для перекодирования аудиофайла в MP3 в памяти
 def convert_to_mp3_in_memory(file_data):
@@ -68,11 +99,44 @@ def convert_to_mp3_in_memory(file_data):
     mp3_io.seek(0)
     return mp3_io
 
+
 # Функция для нормализации имени файла
 def normalize_filename(filename):
     # Удаляем диакритические знаки и заменяем пробелы на подчеркивания
     normalized = unicodedata.normalize('NFKD', filename).encode('ascii', 'ignore').decode('utf-8')
     return normalized.replace(' ', '_')
+
+
+# Определение таблицы по префиксу и постфиксу
+def determine_table(file_name):
+    prefix_mapping = {
+        'S_': 'song',
+        'P_': 'podcast',
+        'B_': 'bible',
+        'SE_': 'sermons',
+        'E_': 'evedence'
+    }
+
+    # Поиск префикса
+    table_base = None
+    for prefix, table in prefix_mapping.items():
+        if file_name.startswith(prefix):
+            table_base = table
+            break
+
+    if not table_base:
+        return None  # Неизвестный тип файла
+
+    # Определение языка по постфиксу
+    if file_name.endswith('_ru.mp3'):
+        language = 'ru'
+    elif file_name.endswith('_en.mp3'):
+        language = 'en'
+    else:
+        language = 'ru'  # По умолчанию на русском
+
+    return f"{table_base}_{language}"
+
 
 async def fetch_channel_info():
     # Получаем информацию о канале
@@ -84,6 +148,7 @@ async def fetch_channel_info():
     print(f"Описание канала: {full_channel.full_chat.about}")
     print(f"Количество участников: {full_channel.full_chat.participants_count}")
 
+
 async def monitor_channel():
     # Получаем информацию о канале
     channel = await client.get_entity(channel_username)
@@ -92,7 +157,7 @@ async def monitor_channel():
     last_message_id = None
     while True:
         try:
-            async for message in client.iter_messages(channel, limit=1000):  # Проверяем последние 10 сообщений
+            async for message in client.iter_messages(channel, limit=1000):  # Проверяем последние 1000 сообщений
                 if message.media:
                     print(f"Тип медиа: {message.media.__class__.__name__}")
                     if hasattr(message.media, 'document'):
@@ -107,8 +172,15 @@ async def monitor_channel():
                         # Нормализуем имя файла
                         normalized_file_name = normalize_filename(file_name)
                         mp3_file_name = f"{os.path.splitext(normalized_file_name)[0]}.mp3"
+
+                        # Определяем таблицу
+                        table_name = determine_table(mp3_file_name)
+                        if not table_name:
+                            print(f"Неизвестный тип файла: {mp3_file_name}. Файл пропущен.")
+                            continue
+
                         # Проверяем, существует ли файл в базе данных
-                        if not file_exists(mp3_file_name):
+                        if not file_exists(table_name, mp3_file_name):
                             # Скачиваем файл в память
                             file_data = await message.download_media(file=bytes)
                             # Перекодируем в MP3 в памяти
@@ -117,6 +189,7 @@ async def monitor_channel():
                             mime_type = "audio/mpeg"
                             # Сохраняем данные в базу данных
                             save_to_db(
+                                table_name=table_name,
                                 track_title=file_name,
                                 file_name=mp3_file_name,
                                 date=message.date.isoformat(),  # Преобразуем дату в строку
@@ -124,9 +197,11 @@ async def monitor_channel():
                                 mime_type=mime_type,
                                 download_link=f"https://t.me/c/{channel.id}/{message.id}"
                             )
-                            print(f"Добавлен файл: {mp3_file_name}")
+                            # Добавляем в плейлист при необходимости
+                            add_to_playlist(mp3_file_name)
+                            print(f"Добавлен файл: {mp3_file_name} в таблицу {table_name}")
                         else:
-                            print(f"Файл уже существует: {mp3_file_name}")
+                            print(f"Файл уже существует: {mp3_file_name} в таблице {table_name}")
                 if last_message_id is None:
                     last_message_id = message.id
                 elif message.id > last_message_id:
@@ -136,6 +211,7 @@ async def monitor_channel():
         except Exception as e:
             print(f"Ошибка при мониторинге канала: {e}")
             await asyncio.sleep(60)  # Повторная попытка через 60 секунд
+
 
 async def main():
     # Инициализация базы данных
@@ -149,6 +225,7 @@ async def main():
 
     # Запускаем мониторинг канала
     await monitor_channel()
+
 
 # Запускаем клиент
 with client:
