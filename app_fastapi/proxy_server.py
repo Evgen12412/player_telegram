@@ -200,6 +200,6 @@ async def proxy(url: str, background_tasks: BackgroundTasks):
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="127.0.0.1", port=5501, log_level="debug")
+    uvicorn.run(app, host="0.0.0.0", port=5500, log_level="debug")
 
     # uvicorn proxy_server:app --host 0.0.0.0 --port 5501 --reload

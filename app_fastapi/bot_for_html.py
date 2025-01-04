@@ -1,92 +1,57 @@
-import asyncio
 import os
-
+import asyncio
+import nest_asyncio
+import logging
 from dotenv import load_dotenv
-from telegram import Update
-from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, WebAppInfo
+from telegram.ext import Application, CommandHandler, ContextTypes
+
+# Настройка логирования
+logging.basicConfig(
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    level=logging.INFO
+)
+logger = logging.getLogger(__name__)
+
+# Применение nest_asyncio
+nest_asyncio.apply()
 
 # Загрузка переменных окружения из .env файла
 load_dotenv()
 
-# Замените на ваш токен
-TOKEN = '7785249240:AAF7uEYbUNTLD7HkM_TotKzgPXO57jLKx8U'
-# Замените на ID вашего канала (например, -1001234567890)
-CHANNEL_ID = '-2465406066'
+# Получение переменных окружения
+BOT_TOKEN = os.getenv('BOT_TOKEN')  # Токен вашего бота
+WEB_APP_URL = 'https://player-apps.ru'  # Замените на ваш реальный URL с HTTPS
+
+# Проверка наличия необходимых переменных
+if not BOT_TOKEN:
+    logger.error("BOT_TOKEN не найден в переменных окружения.")
+    raise ValueError("Не найден BOT_TOKEN в переменных окружения. Проверьте файл .env.")
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Обработчик команды /start."""
-    print("Получена команда /start")
-    await update.message.reply_text('Привет! Я бот, который загружает аудиофайлы с канала.')
-
-async def handle_channel_post(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Обработчик новых сообщений с канала."""
-    print("Получено новое сообщение с канала")
-    if update.channel_post and update.channel_post.audio:
-        print("Сообщение с канала содержит аудиофайл")
-        file = await update.channel_post.audio.get_file()
-        print(f"Файл найден. File ID: {file.file_id}")
-
-        # Сохранение файла
-        file_path = f"app_fastapi/static/audio/{file.file_id}.mp3"
-        print(f"Пытаюсь сохранить файл в: {file_path}")
-
-        try:
-            await file.download_to_drive(file_path)
-            print(f"Файл успешно сохранен: {file_path}")
-        except Exception as e:
-            print(f"Ошибка при сохранении файла: {e}")
-    else:
-        print("Сообщение с канала не содержит аудиофайла")
-
-async def download_channel_history(context: ContextTypes.DEFAULT_TYPE):
-    """Загрузка истории сообщений с канала."""
-    print("Загрузка истории сообщений с канала...")
+    """Обработчик команды /start. Отправляет кнопку для открытия Web App."""
+    logger.info(f"Получена команда /start от пользователя {update.effective_user.id}")
     try:
-        async for message in context.bot.get_chat_history(chat_id=CHANNEL_ID):
-            if message.audio:
-                print("Найден аудиофайл в истории сообщений")
-                file = await message.audio.get_file()
-                print(f"Файл найден. File ID: {file.file_id}")
+        web_app_info = WebAppInfo(url=WEB_APP_URL)
+        keyboard = [[InlineKeyboardButton("Открыть Плеер", web_app=web_app_info)]]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        await update.message.reply_text(
+            'Привет! Нажмите кнопку ниже, чтобы открыть музыкальный плеер.',
+            reply_markup=reply_markup
+        )
+        logger.info("Сообщение с кнопкой Web App успешно отправлено.")
+    except Exception as e:
+        logger.error(f"Ошибка при отправке сообщения с кнопкой Web App: {e}")
 
-                # Сохранение файла
-                file_path = f"app_fastapi/static/audio/{file.file_id}.mp3"
-                print(f"Пытаюсь сохранить файл в: {file_path}")
-
-                try:
-                    await file.download_to_drive(file_path)
-                    print(f"Файл успешно сохранен: {file_path}")
-                except Exception as e:
-                    print(f"Ошибка при сохранении файла: {e}")
-
-            # Добавляем задержку между запросами
-            await asyncio.sleep(1)
-
-    except AttributeError:
-        print("Метод get_chat_history недоступен. Используем get_updates.")
-        updates = await context.bot.get_updates()
-        for update in updates:
-            if update.channel_post and update.channel_post.audio:
-                await handle_channel_post(update, context)
-            # Добавляем задержку между запросами
-            await asyncio.sleep(1)
-
-def main() -> None:
-    """Запуск бота."""
-    print("Запуск бота...")
-    application = Application.builder().token(TOKEN).connection_pool_size(10).pool_timeout(30).build()
-
-    print("Добавление обработчиков...")
-    application.add_handler(CommandHandler("start", start))
-    # application.add_handler(MessageHandler(filters.ChatType.CHANNEL, handle_channel_post))
-
-    # Запуск загрузки истории сообщений в основном цикле событий
-    loop = asyncio.get_event_loop()
-    loop.create_task(download_channel_history(application))
-
-    print("Бот запущен и ожидает сообщений...")
-    application.run_polling()
+async def main_bot() -> None:
+    """Запуск Telegram бота."""
+    logger.info("Запуск Telegram бота.")
+    try:
+        application = Application.builder().token(BOT_TOKEN).build()
+        application.add_handler(CommandHandler("start", start))
+        await application.run_polling()
+    except Exception as e:
+        logger.error(f"Ошибка при запуске бота: {e}")
 
 if __name__ == '__main__':
-    # Создание папок, если они не существуют
-    os.makedirs("app_fastapi/static/audio", exist_ok=True)
-    main()
+    asyncio.run(main_bot())
